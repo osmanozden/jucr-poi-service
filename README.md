@@ -1,20 +1,24 @@
+Anlaşıldı müdür. O zaman `README.md`'deki klonlama komutunu senin verdiğin repo adresiyle güncelliyorum.
+
+İşte `README.md`'nin **son ve güncel** hali:
+
+-----
+
 # JUCR POI Service
 
 [](https://opensource.org/licenses/MIT)
 
-The JUCR POI Service is a high-performance NestJS backend designed to import, store, and serve Point of Interest (POI) data for charging stations from the [OpenChargeMap (OCM) API](https://www.google.com/search?q=https://openchargemap.org/site/develop/api).
+The JUCR POI Service is a high-performance, headless NestJS backend service designed exclusively to import, process, and store Point of Interest (POI) data for charging stations from the [OpenChargeMap (OCM) API](https://openchargemap.org/site/develop/api).
 
-This project is architected to handle intensive, long-running tasks—such as importing thousands of data entries—without blocking the main server thread or compromising its ability to respond to requests, achieved through a robust Redis-backed queue system.
+This project is architected as a robust "worker" service. It handles intensive, long-running data import tasks without blocking or failing, using a resilient Redis-backed queue system.
 
 ## Core Features
 
   * **Resilient Data Import:** Fetches thousands of POIs with a single API call.
-  * **Background Job Processing:** Uses **Redis & Bull** to process data asynchronously, preventing HTTP timeouts.
-  * **Smart Updates (Upsert):** The import operation is idempotent, ensuring data is always current and safe to re-run.
-  * **Clean Architecture:** Strictly separates concerns into `ImporterModule` (Write Logic) and `PoiModule` (Read Logic).
-  * **Strict Data Schema:** Maps raw external API data to a clean, validated, and strict internal model (`poi.schema.ts`).
-  * **Dynamic API Documentation:** All endpoints are automatically documented and interactive via **Swagger** (`/api`).
-  * **Request Validation:** Incoming requests are validated using `class-validator`.
+  * **Background Job Processing:** Uses **Redis & Bull** to process data asynchronously, preventing HTTP timeouts and ensuring reliability.
+  * **Smart Updates (Upsert):** The import process is idempotent. It updates existing records, ensuring data is always current and the import is safe to re-run.
+  * **Focused Architecture:** This is a **headless service** (no Read API) focusing 100% on the "Implementation Part" (data import) as specified by the technical challenge.
+  * **Strict Data Schema:** Maps raw external API data to a clean, defined, and strict internal model (`poi.schema.ts`) before persistence.
   * **Security:** Secured with `helmet` for HTTP header protection.
 
 ## Tech Stack
@@ -24,33 +28,29 @@ This project is architected to handle intensive, long-running tasks—such as im
   * **Database (Primary):** [MongoDB](https://www.mongodb.com/) (with Mongoose)
   * **Database (Queue):** [Redis](https://redis.io/) (with Bull)
   * **Containerization:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
-  * **API Documentation:** [Swagger](https://swagger.io/)
-  * **Validation:** `class-validator`, `class-transformer`
-
------
 
 ## Architectural & Technology Rationale
 
 The technology choices for this project were made to ensure scalability, resilience, and maintainability.
 
   * **Why NestJS?**
-    NestJS provides a powerful, modular architecture out-of-the-box. Its use of TypeScript, Dependency Injection (DI), and decorators allows for highly testable and decoupled code. Separating the application into a `PoiModule` and `ImporterModule` is a clean implementation of this principle.
+    NestJS provides a powerful, modular architecture. Its use of TypeScript and Dependency Injection (DI) allows for highly testable and decoupled code. This allowed us to cleanly separate the HTTP trigger (`ImporterController`) from the API client (`ImporterService`) and the database worker (`ImporterProcessor`).
 
   * **Why MongoDB?**
-    The data from the OCM API is complex, nested, and semi-structured JSON. MongoDB (a NoSQL document database) is perfectly suited to store this kind of data. We initially use its flexibility (`strict: false`) to prototype and then lock it down (`strict: true`) to enforce a clean, predictable data structure, giving us the best of both worlds.
+    The data from the OCM API is complex, nested, and semi-structured JSON. MongoDB (a NoSQL document database) is perfectly suited to store this kind of data. We enforce a `strict: true` schema to ensure our database remains clean and predictable.
 
   * **Why Redis & Bull (Queue System)?**
-    This is the **most critical** architectural decision. Fetching and saving 50,000+ records from an external API *cannot* be done in a single HTTP request; it would time out.
+    This is the **most critical** architectural decision. Fetching and saving 50,000+ records *cannot* be done in a single HTTP request.
 
       * **Decoupling:** The `ImporterService`'s only job is to *enqueue* jobs to Redis. This is extremely fast and returns an immediate response to the user.
-      * **Resilience:** The `ImporterProcessor` (a separate worker) pulls jobs from the queue. If the server crashes, the jobs remain safe in Redis, and processing resumes automatically on restart.
-      * **Rate Limiting & Retries:** Bull allows us to control how many jobs are processed concurrently and automatically retries failed jobs.
+      * **Resilience:** The `ImporterProcessor` (worker) pulls jobs from the queue. If the server crashes, the jobs remain safe in Redis, and processing resumes automatically on restart.
+      * **Retries:** Bull automatically retries failed jobs, ensuring data integrity.
 
   * **Why Docker Compose?**
-    To guarantee that all developers (and production environments) run the exact same versions of MongoDB and Redis. It provides a one-command (`docker-compose up -d`) setup for all required services.
+    To guarantee that all developers run the exact same versions of MongoDB and Redis. It provides a one-command (`docker-compose up -d`) setup for all required services.
 
   * **Why a Strict Schema (`strict: true`)?**
-    Relying on a third-party API's data structure (`strict: false`) is fragile. If OCM changes a field name (e.g., `AddressInfo.Title` -\> `Address.Name`), our Read API (`GET /pois`) would break. By mapping the raw data to our own strict `Poi` model in the `ImporterProcessor`, we decouple our service from the external API. Our database remains clean, and our API remains stable.
+    Relying on a third-party API's data structure is fragile. By mapping the raw data to our own strict `Poi` model in the `ImporterProcessor`, we decouple our service from the external API and ensure our database remains clean.
 
 -----
 
@@ -66,7 +66,7 @@ The technology choices for this project were made to ensure scalability, resilie
 ### 1\. Clone the Repository
 
 ```bash
-git clone https://github.com/osmanozden/jucr-poi-service
+git clone https://github.com/osmanozden/jucr-poi-service.git
 cd jucr-poi-service
 ```
 
@@ -109,19 +109,16 @@ npm run start:dev
 ```
 
 The application will be available at `http://localhost:3000`.
-The Swagger UI will be available at `http://localhost:3000/api`.
 
 -----
 
-## API Endpoints & cURL Examples
+## Usage: Triggering the Import
 
-All endpoints can also be tested from the Swagger UI at `http://localhost:3000/api`.
+This service is a **headless importer**. Its sole responsibility is to populate the database. As per the technical challenge requirements, it **does not** provide any "Read" API endpoints (e.g., `GET /pois`).
 
-### 1\. Import Module
+The *only* endpoint available is used to trigger the import process.
 
-These endpoints are used to trigger the data import process.
-
-#### `GET /import/{countryCode}`
+### `GET /import/{countryCode}`
 
 Triggers the asynchronous import and processing of all POIs for a specific country.
 
@@ -142,92 +139,5 @@ curl -X GET http://localhost:3000/import/de
     "status": "success",
     "queued": 49850
   }
-}
-```
-
-### 2\. POI Module
-
-These endpoints are used to read the POI data from the database.
-
-#### `GET /pois`
-
-Lists all POIs from the database with pagination.
-
-  * **Query Parameters:**
-      * `limit` (optional, default: 20, max: 100)
-      * `skip` (optional, default: 0)
-
-**cURL Example (Get first 5 results):**
-
-```bash
-curl -X GET "http://localhost:3000/pois?limit=5&skip=0"
-```
-
-**Example Response (Success):**
-
-```json
-{
-  "data": [
-    {
-      "_id": "b1a3e...",
-      "ocmId": 12345,
-      "status": "Operational",
-      "address": {
-        "title": "E-Charge Station Berlin",
-        "town": "Berlin",
-        "stateOrProvince": "Berlin",
-        "country": "Germany"
-      }
-    }
-    // ... 4 more items
-  ],
-  "total": 49850,
-  "limit": 5,
-  "skip": 0
-}
-```
-
-#### `GET /pois/id/{id}`
-
-Retrieves a single POI by its internally generated UUID.
-
-**cURL Example:**
-
-```bash
-curl -X GET http://localhost:3000/pois/id/YOUR_COPIED_UUID_FROM_ABOVE_LIST
-```
-
-#### `GET /pois/ocm/{ocmId}`
-
-Retrieves a single POI by its original OCM ID.
-
-**cURL Example:**
-
-```bash
-curl -X GET http://localhost:3000/pois/ocm/158245
-```
-
-**Example Response (Success):**
-
-```json
-{
-  "_id": "b1a3e...",
-  "ocmId": 158245,
-  "status": "Operational",
-  "dateLastStatusUpdate": "2025-10-30T...",
-  "address": {
-    "title": "Rathausplatz",
-    "addressLine1": "Rathausplatz 1",
-    "town": "Erlangen",
-    // ... all mapped fields
-  },
-  "connections": [
-    {
-      "connectionType": "Type 2 (Socket Only)",
-      "powerKW": 22,
-      "currentType": "AC (3-Phase)",
-      "quantity": 2
-    }
-  ]
 }
 ```

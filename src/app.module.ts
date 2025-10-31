@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BullModule } from '@nestjs/bull';
 import { ImporterModule } from './importer/importer.module';
-import { PoiModule } from './poi/poi.module';
 
 @Module({
   imports: [
@@ -29,7 +28,6 @@ import { PoiModule } from './poi/poi.module';
       inject: [ConfigService],
     }),
     ImporterModule,
-    PoiModule,
   ],
   controllers: [],
   providers: [],

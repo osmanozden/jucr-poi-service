@@ -2,7 +2,7 @@ import { Process, Processor } from '@nestjs/bull';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Job } from 'bull';
 import { Model } from 'mongoose';
-import { Poi, PoiDocument } from '../poi/schemas/poi.schema';
+import { Poi, PoiDocument } from './schemas/poi.schema';
 import { Logger } from '@nestjs/common';
 
 @Processor('poi-import')
