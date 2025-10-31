@@ -28,9 +28,8 @@ describe('ImporterController (e2e)', () => {
     await app.close();
   });
 
-  it('/import/{countryCode} (GET) should trigger the import process', async () => {
+  it('/import/{countryCode} (GET) should trigger the import process (Happy Path)', async () => {
     const countryCode = 'DE';
-
     const mockImportResult = {
       status: 'success',
       queued: 123,
@@ -51,5 +50,43 @@ describe('ImporterController (e2e)', () => {
       `Import process started for ${countryCode}`,
     );
     expect(response.body.data).toEqual(mockImportResult);
+  });
+
+  it('/import/{countryCode} (GET) should return no_data status if service finds nothing', async () => {
+    const countryCode = 'XX';
+    const mockNoDataResult = {
+      status: 'no_data',
+      queued: 0,
+    };
+
+    jest
+      .spyOn(importerService, 'importPoisByCountry')
+      .mockImplementation(async () => mockNoDataResult);
+
+    const response = await request(app.getHttpServer())
+      .get(`/import/${countryCode}`)
+      .expect(200);
+
+    expect(importerService.importPoisByCountry).toHaveBeenCalledWith(
+      countryCode,
+    );
+    expect(response.body.data).toEqual(mockNoDataResult);
+  });
+
+  it('/import/{countryCode} (GET) should return 500 if the service throws an error', async () => {
+    const countryCode = 'ER';
+
+    jest
+      .spyOn(importerService, 'importPoisByCountry')
+      .mockRejectedValue(new Error('Internal API Error'));
+
+    const response = await request(app.getHttpServer())
+      .get(`/import/${countryCode}`)
+      .expect(500);
+
+    expect(importerService.importPoisByCountry).toHaveBeenCalledWith(
+      countryCode,
+    );
+    expect(response.body.message).toEqual('Internal server error');
   });
 });

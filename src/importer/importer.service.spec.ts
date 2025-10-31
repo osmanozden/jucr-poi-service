@@ -3,7 +3,7 @@ import { ImporterService } from './importer.service';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { getQueueToken } from '@nestjs/bull';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AxiosResponse } from 'axios';
 
 describe('ImporterService', () => {
@@ -51,20 +51,20 @@ describe('ImporterService', () => {
   });
 
   describe('importPoisByCountry', () => {
-    it('should fetch POIs and add them to the queue', async () => {
-      const mockPoiData = [
-        { ID: 1, AddressInfo: { Title: 'Test POI 1' } },
-        { ID: 2, AddressInfo: { Title: 'Test POI 2' } },
-      ];
+    const mockPoiData = [
+      { ID: 1, AddressInfo: { Title: 'Test POI 1' } },
+      { ID: 2, AddressInfo: { Title: 'Test POI 2' } },
+    ];
 
-      const mockAxiosResponse = {
-        data: mockPoiData,
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: {},
-      } as AxiosResponse;
+    const mockAxiosResponse = {
+      data: mockPoiData,
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    } as AxiosResponse;
 
+    it('should fetch POIs and add them to the queue (Happy Path)', async () => {
       jest
         .spyOn(httpService, 'get')
         .mockImplementation(() => of(mockAxiosResponse));
@@ -79,25 +79,28 @@ describe('ImporterService', () => {
       );
 
       expect(queueMock.add).toHaveBeenCalledTimes(mockPoiData.length);
-      expect(queueMock.add).toHaveBeenCalledWith(mockPoiData[0], expect.any(Object));
-      expect(queueMock.add).toHaveBeenCalledWith(mockPoiData[1], expect.any(Object));
+      expect(queueMock.add).toHaveBeenCalledWith(
+        mockPoiData[0],
+        expect.any(Object),
+      );
+      expect(queueMock.add).toHaveBeenCalledWith(
+        mockPoiData[1],
+        expect.any(Object),
+      );
 
       expect(result.status).toBe('success');
       expect(result.queued).toBe(mockPoiData.length);
     });
 
     it('should return no_data if API returns empty array', async () => {
-      const mockAxiosResponse = {
+      const mockEmptyResponse = {
+        ...mockAxiosResponse,
         data: [],
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: {},
-      } as AxiosResponse;
+      };
 
       jest
         .spyOn(httpService, 'get')
-        .mockImplementation(() => of(mockAxiosResponse));
+        .mockImplementation(() => of(mockEmptyResponse));
 
       const result = await service.importPoisByCountry('DE');
 
@@ -105,6 +108,36 @@ describe('ImporterService', () => {
       expect(queueMock.add).not.toHaveBeenCalled();
       expect(result.status).toBe('no_data');
       expect(result.queued).toBe(0);
+    });
+
+    it('should throw an error if HttpService fails', async () => {
+      jest
+        .spyOn(httpService, 'get')
+        .mockImplementation(() =>
+          throwError(() => new Error('OCM API is down')),
+        );
+
+      await expect(service.importPoisByCountry('DE')).rejects.toThrow(
+        'Failed to process country DE',
+      );
+      expect(queueMock.add).not.toHaveBeenCalled();
+    });
+
+    it('should continue queueing even if one job fails to add', async () => {
+      jest
+        .spyOn(httpService, 'get')
+        .mockImplementation(() => of(mockAxiosResponse));
+
+      queueMock.add
+        .mockRejectedValueOnce(new Error('Redis connection error'))
+        .mockResolvedValueOnce({ id: 'job-2' });
+
+      const result = await service.importPoisByCountry('DE');
+
+      expect(httpService.get).toHaveBeenCalledTimes(1);
+      expect(queueMock.add).toHaveBeenCalledTimes(2);
+      expect(result.status).toBe('success');
+      expect(result.queued).toBe(mockPoiData.length);
     });
   });
 });
