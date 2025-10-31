@@ -146,7 +146,7 @@ curl -X GET http://localhost:3000/import/de
 
 -----
 
-![Data Flow Diagram](../docs/flow.png)
+![Data Flow Diagram](./flow.png)
 
 ## Architecture & Data Flow
 
