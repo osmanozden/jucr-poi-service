@@ -146,6 +146,8 @@ curl -X GET http://localhost:3000/import/de
 
 -----
 
+![Data Flow Diagram](./flow.png)
+
 ## Architecture & Data Flow
 
 This service is architected for resilience and scalability. [cite\_start]The data import process is decoupled from the initial HTTP request[cite: 14].
