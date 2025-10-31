@@ -66,7 +66,7 @@ The technology choices for this project were made to ensure scalability, resilie
 ### 1\. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/jucr-poi-service.git
+git clone https://github.com/osmanozden/jucr-poi-service
 cd jucr-poi-service
 ```
 
