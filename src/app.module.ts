@@ -8,7 +8,7 @@ import { ImporterModule } from './importer/importer.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env.local', '.env'],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
