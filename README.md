@@ -1,11 +1,3 @@
-Müdür haklısın, lafa daldım, resmi unuttum. Çok pardon.
-
-İşte o mükemmel `README.md`'nin **düzeltilmiş ve typo'ları giderilmiş mimari diyagramı da EKLENMİŞ** son hali.
-
-Dosyanın içeriğini **tamamen** bununla değiştir:
-
------
-
 # JUCR POI Service
 
 [](https://opensource.org/licenses/MIT)

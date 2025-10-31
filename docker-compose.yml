@@ -1,5 +1,19 @@
 version: '3.8'
+
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jucr_app_service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - redis
+    env_file:
+      - .env
+
   mongo:
     image: mongo:latest
     container_name: jucr_mongo_db
