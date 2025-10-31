@@ -146,27 +146,22 @@ curl -X GET http://localhost:3000/import/de
 
 -----
 
-```markdown
+![Data Flow Diagram](../docs/flow.png)
+
 ## Architecture & Data Flow
 
-The following diagram illustrates the system architecture and data flow:
+This service is architected for resilience and scalability. The data import process is decoupled from the initial HTTP request.
 
-```mermaid
-graph TD
-    Client[Client / User] -- "GET /import/{countryCode}" --> ImporterController(NestJS Application / ImporterController)
-    
-    ImporterController -- calls --> ImporterService(NestJS Application / ImporterService)
-    ImporterService -- "Fetches all POIs" --> OCM(OpenChargeMap API)
-    ImporterService -- "Enqueue Job (1 per POI)" --> Redis(Redis Queue via Bull)
-    
-    Redis -- "Pulls Job" --> ImporterProcessor(NestJS Application / ImporterProcessor)
-    ImporterProcessor -- "Maps Data (Strict Schema)" --> MappedData[Clean POI Data]
-    MappedData -- "Upsert Document" --> MongoDB(MongoDB Database / pois collection)
-    
-    ImporterProcessor -- "Logs (stdout)" --> CentralLogging(Centralized Logging / ELK Stack)
-    ImporterProcessor -- "On Failure" --> Retry[Failed Job Retry]
-    Retry -- "Report" --> Monitoring(Monitoring Dashboard / Arena)
-    Redis -- "Queue Stats" --> Monitoring
+1.  A `GET /import/{countryCode}` request is received by the **`ImporterController`**.
+2.  The `ImporterController` calls the **`ImporterService`**.
+3.  The `ImporterService` fetches all POI data from the external **OpenChargeMap (OCM) API**.
+4.  Instead of processing the data, the service iterates the list and enqueues *one job per POI* into the **Redis (Bull) Queue**. It then returns an immediate "success" response to the user.
+5.  The **`ImporterProcessor`** (a separate worker) listens to the queue.
+6.  For each job, the `ImporterProcessor` maps the raw OCM data to our clean `Poi` schema.
+7.  It then performs an `updateOne()` operation with `upsert: true` against the **MongoDB Database**.
+8.  If a job fails, Bull automatically retries it, ensuring data integrity.
+
+This queue-based architecture ensures that the HTTP request never times out, and the data import can safely recover from server restarts or database connection issues.
 
 ## Database Documentation
 
