@@ -2,16 +2,16 @@
 
 ### 1. Overview
 
-[cite_start]While the local development environment is provided via `docker-compose` [cite: 32][cite_start], this document outlines the necessary resources and configuration required to deploy the JUCR POI Importer Service to a production-grade environment, specifically a **Kubernetes (K8s) cluster**[cite: 17].
+While the local development environment is provided via `docker-compose` [cite: 32], this document outlines the necessary resources and configuration required to deploy the JUCR POI Importer Service to a production-grade environment, specifically a **Kubernetes (K8s) cluster**[cite: 17].
 
-[cite_start]**Note:** The actual Kubernetes manifest files are not required; only the documentation of the required resources is necessary[cite: 17].
+**Note:** The actual Kubernetes manifest files are not required; only the documentation of the required resources is necessary[cite: 17].
 
 ### 2. Application Containerization
 
 The service must first be packaged as a container image.
 
 * **Resource Required:** **`Dockerfile`**
-* [cite_start]**Purpose:** A standard multi-stage `Dockerfile` is included in the project to containerize the TypeScript application [cite: 34] into a lightweight, runnable image. This image will be the basis for the K8s Deployment.
+* **Purpose:** A standard multi-stage `Dockerfile` is included in the project to containerize the TypeScript application [cite: 34] into a lightweight, runnable image. This image will be the basis for the K8s Deployment.
 
 ### 3. Kubernetes Resources (Application Layer)
 
@@ -19,8 +19,8 @@ These resources manage the deployment and exposure of the stateless Importer Ser
 
 | K8s Resource | Description | Rationale |
 | :--- | :--- | :--- |
-| **Deployment** | Manages the desired state for the application pods (e.g., image version, resource limits, readiness/liveness probes). | [cite_start]Allows for **horizontal scaling** by configuring a `replicas` count greater than one, ensuring high capacity for concurrent job processing[cite: 29]. |
-| **Service (LoadBalancer/ClusterIP)** | Exposes the `Deployment` to external or internal traffic. | [cite_start]An ingress point is required for the `GET /import/{countryCode}` endpoint to be accessed and trigger the import process[cite: 14]. A `LoadBalancer` is ideal for external exposure. |
+| **Deployment** | Manages the desired state for the application pods (e.g., image version, resource limits, readiness/liveness probes). | Allows for **horizontal scaling** by configuring a `replicas` count greater than one, ensuring high capacity for concurrent job processing[cite: 29]. |
+| **Service (LoadBalancer/ClusterIP)** | Exposes the `Deployment` to external or internal traffic. | An ingress point is required for the `GET /import/{countryCode}` endpoint to be accessed and trigger the import process[cite: 14]. A `LoadBalancer` is ideal for external exposure. |
 | **Horizontal Pod Autoscaler (HPA)** | (Recommended) Automatically adjusts the number of replicas based on CPU usage or custom metrics (e.g., Redis queue length). | Enhances scalability and cost efficiency by scaling processing power to meet the varying load of data imports. |
 
 ### 4. Kubernetes Resources (Persistence Layer)
@@ -38,5 +38,5 @@ All connection strings, API keys, and configurations must be securely managed an
 
 | K8s Resource | Environment Variable Examples | Rationale |
 | :--- | :--- | :--- |
-| **Secret** | [cite_start]`OCM_API_KEY`[cite: 43], `MONGO_URI` | For sensitive information, `Secret` resources ensure that values are not exposed in clear text within configuration files or logs. |
+| **Secret** | `OCM_API_KEY`[cite: 43], `MONGO_URI` | For sensitive information, `Secret` resources ensure that values are not exposed in clear text within configuration files or logs. |
 | **ConfigMap** | `OCM_API_URL`, `REDIS_HOST`, `PORT` | For non-sensitive configuration parameters, `ConfigMap` allows for easy injection into the application `Deployment` manifest. |

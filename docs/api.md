@@ -2,7 +2,7 @@
 
 ### 1\. API Documentation: Importer Endpoint
 
-[cite\_start]The JUCR POI Service is architected as a **headless worker**[cite: 40]. [cite\_start]It is designed *only* to import and store data[cite: 5, 40]. [cite\_start]Therefore, it implements only **one primary endpoint** to trigger the asynchronous import process[cite: 41].
+[cite\_start]The JUCR POI Service is architected as a **headless worker**. [cite\_start]It is designed *only* to import and store data[cite: 5, 40]. [cite\_start]Therefore, it implements only **one primary endpoint** to trigger the asynchronous import process[cite: 41].
 
 #### Endpoint Details
 
