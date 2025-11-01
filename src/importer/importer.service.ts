@@ -78,9 +78,9 @@ export class ImporterService {
     }
 
     this.logger.log(`Queueing ${poisToImport.length} POIs for processing...`);
-    for (const poi of poisToImport) {
-      await this.addPoiToQueue(poi);
-    }
+      await Promise.all(
+        poisToImport.map(poi => this.addPoiToQueue(poi))
+    );
 
     this.logger.log(`All ${poisToImport.length} POIs for ${countryCode} have been added to the queue.`);
     return { status: 'success', queued: poisToImport.length };

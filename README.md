@@ -123,7 +123,7 @@ Triggers the asynchronous import and processing of all POIs for a specific count
 **cURL Example (Import Germany):**
 
 ```bash
-curl -X GET http://localhost:3000/import/de
+curl --location --globoff 'http://localhost:3000/import?countryCode={{contryCode}}'
 ```
 
 **Example Response (Success):**
