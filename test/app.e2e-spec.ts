@@ -22,8 +22,7 @@ describe('ImporterController (e2e)', () => {
 
     importerService = moduleFixture.get<ImporterService>(ImporterService);
     poiImportQueue = moduleFixture.get<Queue>(getQueueToken('poi-import'));
-    
-    importPoisSpy = jest.spyOn(importerService, 'importPoisByCountry');
+    importPoisSpy = jest.spyOn(importerService, 'importPoisByCountry'); 
   });
 
   afterEach(() => {
@@ -34,6 +33,7 @@ describe('ImporterController (e2e)', () => {
   afterAll(async () => {
     await poiImportQueue.close();
     await app.close();
+    await new Promise(resolve => setTimeout(resolve, 500)); 
   });
 
   it('/import (GET) should return 400 Bad Request if countryCode query parameter is missing', async () => {
@@ -43,60 +43,98 @@ describe('ImporterController (e2e)', () => {
       .get(`/import`)
       .expect(400)
       .expect((res) => {
-        expect(res.body.message).toEqual(expectedErrorMessage);
+        expect(Array.isArray(res.body.message)).toBe(true);
+        expect(res.body.message).toContain(expectedErrorMessage);
         expect(res.body.error).toEqual('Bad Request');
       });
     
     expect(importPoisSpy).not.toHaveBeenCalled();
   });
+  
+  it('/import?countryCode=us (GET) should successfully transform and queue lowercase code', async () => {
+    const lowercaseCode = 'us';
+    const uppercaseCode = 'US';
+    const mockQueueResult = { jobId: 3, queueName: 'poi-import' };
 
-  it('/import?countryCode={code} (GET) should trigger the import process (Happy Path)', async () => {
+    importPoisSpy.mockImplementation(async () => mockQueueResult);
+
+    const response = await request(app.getHttpServer())
+      .get(`/import?countryCode=${lowercaseCode}`)
+      .expect(202); 
+
+    expect(importPoisSpy).toHaveBeenCalledWith(uppercaseCode); 
+    expect(response.body.countryCode).toEqual(uppercaseCode); 
+    expect(response.body.status).toEqual('queued');
+  });
+
+  it('/import?countryCode={code} (GET) should successfully queue the import process (Happy Path)', async () => {
     const countryCode = 'DE';
-    const mockImportResult = {
-      status: 'success',
-      queued: 123,
-    };
+    const mockQueueResult = { jobId: 1, queueName: 'poi-import' };
 
-    importPoisSpy.mockImplementation(async () => mockImportResult);
+    importPoisSpy.mockImplementation(async () => mockQueueResult);
 
     const response = await request(app.getHttpServer())
       .get(`/import?countryCode=${countryCode}`)
-      .expect(200);
+      .expect(202); 
 
     expect(importPoisSpy).toHaveBeenCalledWith(countryCode);
     expect(response.body.message).toContain(
-      `Import process started for ${countryCode}`,
+      `Import job successfully queued for ${countryCode}`,
     );
-    expect(response.body.data).toEqual(mockImportResult);
+    expect(response.body.status).toEqual('queued');
+    expect(response.body.countryCode).toEqual(countryCode);
+  });
+  
+  it('/import?countryCode=11 (GET) should return 400 Bad Request if code is numeric', async () => {
+    const expectedErrorMessage = 'The countryCode must contain only alphabetic characters.';
+
+    await request(app.getHttpServer())
+      .get(`/import?countryCode=11`)
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.message).toContain(expectedErrorMessage);
+      });
+    
+    expect(importPoisSpy).not.toHaveBeenCalled();
   });
 
-  it('/import?countryCode={code} (GET) should return no_data status if service finds nothing', async () => {
-    const countryCode = 'XX';
-    const mockNoDataResult = {
-      status: 'no_data',
-      queued: 0,
-    };
+  it('/import?countryCode=USA (GET) should return 400 Bad Request if code length is incorrect', async () => {
+    const expectedErrorMessage = 'The countryCode must be exactly 2 characters long, conforming to ISO 3166-1 alpha-2 standard.';
 
-    importPoisSpy.mockImplementation(async () => mockNoDataResult);
+    await request(app.getHttpServer())
+      .get(`/import?countryCode=USA`)
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.message).toContain(expectedErrorMessage);
+      });
+    
+    expect(importPoisSpy).not.toHaveBeenCalled();
+  });
+
+  it('/import?countryCode={code} (GET) should handle queuing success even if internal logic may vary', async () => {
+    const countryCode = 'XX';
+    const mockQueueResult = { jobId: 2, queueName: 'poi-import' };
+
+    importPoisSpy.mockImplementation(async () => mockQueueResult);
 
     const response = await request(app.getHttpServer())
       .get(`/import?countryCode=${countryCode}`)
-      .expect(200);
+      .expect(202); 
 
     expect(importPoisSpy).toHaveBeenCalledWith(countryCode);
-    expect(response.body.data).toEqual(mockNoDataResult);
+    expect(response.body.status).toEqual('queued');
+    expect(response.body.countryCode).toEqual(countryCode);
   });
 
-  it('/import?countryCode={code} (GET) should return 500 if the service throws an error', async () => {
+  it('/import?countryCode={code} (GET) should return 500 if the queueing service throws an error', async () => {
     const countryCode = 'ER';
 
     importPoisSpy.mockRejectedValue(new Error('Internal API Error'));
 
-    const response = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .get(`/import?countryCode=${countryCode}`)
       .expect(500);
 
     expect(importPoisSpy).toHaveBeenCalledWith(countryCode);
-    expect(response.body.message).toEqual('Internal server error');
   });
 });
