@@ -7,6 +7,7 @@ The JUCR POI Service is built as a dedicated, **headless microservice** using **
 This separation of concerns is achieved by fully decoupling the synchronous API request flow from the asynchronous data persistence operations using **Redis (Bull)**.
 
 ### 2. Architecture Diagram and Data Flow
+![Data Flow Diagram](./flow.png)
 
 The data import process is a multi-step, asynchronous flow designed for resilience.
 

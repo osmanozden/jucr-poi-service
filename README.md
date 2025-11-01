@@ -1,3 +1,10 @@
+Affedersiniz\! `README.md`'nin Kullanım (Usage) bölümünden örnek `curl` komutunu yanlışlıkla çıkarmışım. Amacım, dokümantasyonu zenginleştirirken kritik bilgileri korumaktı.
+
+Örnek `curl` komutunu, güncellediğimiz ve detaylı dosyalara bağlantı içeren `README.md` versiyonuna şimdi ekliyorum.
+
+İşte düzeltilmiş ve bağlantıları koruyan **İngilizce** `README.md` içeriği:
+
+````markdown
 # JUCR POI Importer Service
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -10,7 +17,9 @@ This project is architected as a robust "worker" service, utilizing a **Redis-ba
 
 This microservice acts as the **Single Source of Truth** for all charging station locations, specifications, and availability data within the JUCR platform. Its sole responsibility is to import and persist this critical data, ready for consumption by downstream services like mobile applications and routing algorithms.
 
-## ✨ Key Features
+**➡️ [Full Project Overview and Goals](docs/project-overview.md)**
+
+## ✨ Core Features & Technical Rationale
 
 | Feature | Description | Rationale |
 | :--- | :--- | :--- |
@@ -18,8 +27,6 @@ This microservice acts as the **Single Source of Truth** for all charging statio
 | **Background Processing** | Uses **Redis & Bull** to process data **asynchronously** after fetching. | Crucial for avoiding HTTP timeouts on long-running tasks and guaranteeing reliability. |
 | **Idempotent Updates (Upsert)** | The import process is idempotent. It uses `updateOne` with `upsert: true` based on the unique `ocmId`. | Safely updates existing records and prevents duplicates, allowing the import to be safely re-run. |
 | **Headless Architecture** | This service has **no Read API** (e.g., no `GET /pois`). Its focus is 100% on the data import and persistence logic. | Aligns with the technical challenge requirement to focus solely on the implementation of the data import part. |
-| **Strict Data Schema** | Raw OCM data is mapped to a clean, strongly-typed internal MongoDB model (`poi.schema.ts`) using Mongoose with `strict: true`. | Decouples the service from the external API's structure and ensures data cleanliness. |
-| **Horizontal Scalability** | The worker component (`ImporterProcessor`) is **stateless**, designed to be deployed with multiple replicas in Kubernetes to linearly scale processing throughput by increasing the replica count. | Future-proofs the service for rapidly growing global data volume. |
 
 ## ⚙️ Technical Stack
 
@@ -31,18 +38,7 @@ This microservice acts as the **Single Source of Truth** for all charging statio
 | **Database (Queue)** | [Redis](https://redis.io/) (Bull) | For robust, durable, and asynchronous job queuing and management. |
 | **Containerization** | [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/) | For consistent local development environment setup. |
 
----
-
-## 📐 Architecture and Data Flow
-
-The core architecture is a queue-based worker model designed for decoupling and resilience.
-
-1.  **Trigger:** A client sends a `GET /import/{countryCode}` request.
-2.  **API Fetch & Enqueue:** The `ImporterService` fetches all POI data from the OCM API in one optimized request. It then immediately iterates over the results and enqueues **one job per POI object** into the **Redis Queue**.
-3.  **Immediate Response:** The controller returns a **`202 Accepted`** response immediately to the client. The main application thread is **never blocked**.
-4.  **Processing:** The separate, stateless **`ImporterProcessor`** (the worker) listens to the queue, pulls jobs, maps the raw OCM data to the clean internal schema, and performs the database operation.
-5.  **Persistence:** The worker executes an **Upsert** (`updateOne` with `upsert: true` on the `ocmId`) against the **MongoDB database**.
-6.  **Reliability:** If a job fails, Bull automatically handles **retries** to ensure data integrity.
+**➡️ [Detailed Architectural and Scalability Rationale](docs/architecture.md)**
 
 ---
 
@@ -93,21 +89,17 @@ REDIS_PORT=6379
 docker-compose up -d
 ```
 
-This starts the necessary MongoDB and Redis services for local development.
-
 ### 5\. Start the Application
 
 ```bash
 npm run start:dev
 ```
 
-The application will be running at `http://localhost:3000`.
-
 -----
 
 ## 🛠️ Usage: Triggering the Import
 
-As a **headless importer**, the service exposes only one primary endpoint to trigger the process.
+The service exposes only one primary endpoint to trigger the process.
 
 ### `GET /import`
 
@@ -118,7 +110,7 @@ Triggers the asynchronous import and processing of all POIs for a specified coun
 **cURL Example:**
 
 ```bash
-curl --location --globoff 'http://localhost:3000/import?countryCode=DE'
+curl --location --globoff 'http://localhost:3000/import?countryCode={{countryCode}}'
 ```
 
 **Example Successful Response (202 Accepted):**
@@ -134,28 +126,18 @@ curl --location --globoff 'http://localhost:3000/import?countryCode=DE'
 }
 ```
 
+**➡️ [Full API Documentation and GraphQL Integration Strategy](https://www.google.com/search?q=docs/api.md)**
+
 -----
 
-## 💾 Database Documentation
+## 💾 Database and Data Layer
 
-### Schema Design Philosophy
+The data is stored in MongoDB, employing a strict schema design.
 
-  * **Database:** MongoDB (using Mongoose).
-  * **Primary Key:** **UUIDv4** is used for the `_id` key on every document for horizontal scalability.
-  * **Structure:** External OCM data is mapped to clean, self-contained sub-documents (e.g., `address`, `connections`).
+  * **Primary Key:** **UUIDv4** is used for the `_id` key on every document.
+  * **Indexing:** The unique index on **`ocmId`** is **critical** for the performance of the idempotent upsert logic.
 
-### Indexing Strategy
-
-A robust indexing strategy is essential for the high-volume **upsert** logic.
-
-| Index Field | Type | Purpose |
-| :--- | :--- | :--- |
-| `_id` | Unique (Default) | Primary key index. |
-| **`ocmId`** | **Unique Index** | **CRITICAL for Upsert Logic**. Allows MongoDB to instantly locate the document for updates, preventing slow full-collection scans for every incoming POI job. |
-
-### GraphQL Read Service Readiness
-
-While this service does not include a Read API, the data is structured for optimal consumption by a separate GraphQL Read Service. GraphQL prevents **over-fetching** by letting clients request only the fields they need from the complex POI documents.
+**➡️ [Detailed Database Schema and Indexing Strategies](https://www.google.com/search?q=docs/database-schema.md)**
 
 -----
 
@@ -163,40 +145,27 @@ While this service does not include a Read API, the data is structured for optim
 
 ### Deployment (Kubernetes Readiness)
 
-The service is designed for deployment in a production-grade **Kubernetes (K8s) cluster**.
+The service is designed for deployment in a production-grade **Kubernetes (K8s) cluster**. Resources required include K8s `Deployment` for the application, `StatefulSet` for MongoDB/Redis, and `Secret`/`ConfigMap` for configuration.
 
-| K8s Resource | Component | Rationale |
-| :--- | :--- | :--- |
-| **Deployment** | Importer App | Manages the stateless application pods. Allows for **horizontal scaling** of worker replicas to increase processing throughput. |
-| **Service (ClusterIP/LoadBalancer)** | Importer App | Exposes the application's `/import` endpoint. |
-| **StatefulSet** | MongoDB & Redis | Used for the persistent databases, ensuring stable network IDs and ordered deployment. |
-| **PersistentVolumeClaim (PVC)** | MongoDB & Redis | Guarantees that the POI data and the job queue data (in Redis) persist across pod restarts and failures. |
-| **Secret** | `OCM_API_KEY`, `MONGO_URI` | Used to securely inject sensitive configuration values. |
+**➡️ [Required Deployment Instructions and K8s Resources](https://www.google.com/search?q=docs/deployment.md)**
 
 ### Monitoring and Reliability
 
 The service is built with high observability to guarantee data accuracy and ingestion reliability.
 
-| Component | Role | Rationale |
-| :--- | :--- | :--- |
-| **Logging** | Structured Logs to `stdout` | Logs are collected by an agent (e.g., Fluentd) and centralized in a platform (ELK/Loki/Datadog) for search and error analysis. |
-| **Metrics** | Prometheus/Grafana | Exposes a dedicated `/metrics` endpoint to collect CPU, memory, and API response time metrics. |
-| **Queue Monitoring** | **BullMQ-UI / Arena** | **CRITICAL:** A dedicated dashboard is used to provide real-time visibility into the queue: **Waiting, Completed, and Failed** job counts. This allows for proactive alerting and manual inspection/retries of failed jobs. |
-| **Alerting** | Grafana/Prometheus | Alerts are configured for critical failure thresholds (e.g., failed jobs count exceeding SLO or Queue Latency increasing), signaling the need to scale worker pods. |
+  * **Logging:** Structured logs are centralized in platforms like ELK/Loki/Datadog.
+  * **Queue Monitoring:** **BullMQ-UI / Arena** is used for real-time visibility into the queue's health (Waiting, Completed, Failed jobs).
+
+**➡️ [Monitoring, Logging, and Alerting Strategy](https://www.google.com/search?q=docs/monitoring.md)**
 
 -----
 
 ## 🧪 Testing
 
-The project includes both unit and end-to-end (E2E) tests as required by the challenge.
+The project includes both unit and end-to-end (E2E) tests.
 
-### Unit Tests (`src/importer/importer.service.spec.ts`)
-
-Validate the logic of the `ImporterService` in isolation, ensuring the service correctly calls the OCM API and queues the correct number of jobs.
-
-### End-to-End Tests (`test/app.e2e-spec.ts`)
-
-Verifies the entire request flow: that the `GET /import/{countryCode}` endpoint is correctly configured, the controller delegates to the service, and the HTTP response structure is correct.
+  * **Unit Tests:** Validate the logic of the `ImporterService` in isolation.
+  * **E2E Tests:** Verifies the entire request flow for the `GET /import/{countryCode}` endpoint.
 
 ### Running Tests
 
@@ -208,5 +177,4 @@ npm run test
 npm run test:e2e
 ```
 
-```
-```
+Would you like me to make any other adjustments or add more details to a specific section?
