@@ -16,10 +16,10 @@ The successful implementation of this service is **crucial** [cite: 7] for the c
 
 | Goal | Description | Significance |
 | :--- | :--- | :--- |
-| **Reliable Integration** | Establish a robust and resilient integration with the OpenChargeMap API[cite: 8]. | Ensures a constant, trusted flow of data, maintaining data integrity and reliability[cite: 8]. |
+| **Reliable Integration** | Establish a robust and resilient integration with the OpenChargeMap API. | Ensures a constant, trusted flow of data, maintaining data integrity and reliability. |
 | **Scalable Import** | Implement a concurrent algorithm to handle and process the entire volume of POIs efficiently[cite: 23, 25, 29]. | Future-proofs the platform to handle the rapidly growing volume of global charging station data. |
 | **Platform Alignment** | Store processed data in MongoDB, ready for immediate consumption by other platform services[cite: 9, 28, 38]. | Enables seamless interaction with the remaining services of the platform[cite: 9]. |
-| **Operational Excellence**| Ensure the service is highly monitored and resilient, with effective error handling and logging[cite: 8, 20, 30]. | Minimizes downtime and ensures the accuracy of the core platform data[cite: 8]. |
+| **Operational Excellence**| Ensure the service is highly monitored and resilient, with effective error handling and logging[cite: 8, 20, 30]. | Minimizes downtime and ensures the accuracy of the core platform data. |
 
 ### 4. Role in the Organization
 

@@ -2,7 +2,7 @@
 
 ### 1. Overview
 
-The JUCR POI Service requires high observability to guarantee the reliability and accuracy of the data ingestion process[cite: 8]. This strategy includes comprehensive logging, real-time queue monitoring, and modern metric collection using established industry standards.
+The JUCR POI Service requires high observability to guarantee the reliability and accuracy of the data ingestion process. This strategy includes comprehensive logging, real-time queue monitoring, and modern metric collection using established industry standards.
 
 ### 2. Logging Strategy
 
