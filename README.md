@@ -1,10 +1,3 @@
-Affedersiniz\! `README.md`'nin Kullanım (Usage) bölümünden örnek `curl` komutunu yanlışlıkla çıkarmışım. Amacım, dokümantasyonu zenginleştirirken kritik bilgileri korumaktı.
-
-Örnek `curl` komutunu, güncellediğimiz ve detaylı dosyalara bağlantı içeren `README.md` versiyonuna şimdi ekliyorum.
-
-İşte düzeltilmiş ve bağlantıları koruyan **İngilizce** `README.md` içeriği:
-
-````markdown
 # JUCR POI Importer Service
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
