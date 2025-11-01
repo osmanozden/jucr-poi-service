@@ -46,4 +46,4 @@ Although this service is a headless writer, we acknowledge the need for other se
 High-priority alerts must be configured in Prometheus/Grafana or the centralized logging platform:
 
 * **Critical Alerts:** Alert if the **Failed Jobs count** exceeds a critical threshold or if application liveness probes fail.
-* **Performance Alerts:** Alert if **Queue Latency** (job waiting time) exceeds the service-level objective (SLO), signaling a need to horizontally scale the worker pods[cite: 29].
+* **Performance Alerts:** Alert if **Queue Latency** (job waiting time) exceeds the service-level objective (SLO), signaling a need to horizontally scale the worker pods.
