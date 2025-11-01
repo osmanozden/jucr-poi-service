@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ImporterService } from './importer.service';
+import { ImporterService } from './service/importer.service';
 import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bull';
-import { ImporterProcessor } from './importer.processor';
+import { ImporterProcessor } from './job/importer.processor';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Poi, PoiSchema } from './schemas/poi.schema';
-import { ImporterController } from './importer.controller';
+import { ImporterController } from './controller/importer.controller';
 
 @Module({
   imports: [

@@ -1,6 +1,6 @@
 import { Controller, Get, Query, Logger, HttpCode, ValidationPipe } from '@nestjs/common';
-import { ImporterService } from './importer.service';
-import { ImportQueryDto } from './model/import-query.dto';
+import { ImporterService } from '../service/importer.service';
+import { ImportQueryDto } from '../model/import-query.dto';
 
 @Controller('import')
 export class ImporterController {

@@ -2,7 +2,7 @@ import { Test as NestTest, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { ImporterService } from './../src/importer/importer.service';
+import { ImporterService } from './../src/service/importer.service';
 import { getQueueToken } from '@nestjs/bull';
 import { Queue } from 'bull';
 

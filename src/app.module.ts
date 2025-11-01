@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BullModule } from '@nestjs/bull';
-import { ImporterModule } from './importer/importer.module';
+import { ImporterModule } from './importer.module';
 
 @Module({
   imports: [

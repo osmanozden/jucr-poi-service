@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ImporterProcessor } from './importer.processor';
+import { ImporterProcessor } from '../job/importer.processor';
 import { getModelToken } from '@nestjs/mongoose';
-import { Poi } from './schemas/poi.schema';
+import { Poi } from '../schemas/poi.schema';
 import { Job } from 'bull';
 
 describe('ImporterProcessor', () => {

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ImporterService } from './importer.service';
+import { ImporterService } from '../service/importer.service';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { getQueueToken } from '@nestjs/bull';
