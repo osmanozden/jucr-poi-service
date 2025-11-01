@@ -22,7 +22,7 @@ The JUCR POI Service is architected as a **headless worker**. It is designed *on
 #### Example Request
 
 ```bash
-curl --location 'http://localhost:3000/import?countryCode=DE'
+curl --location --globoff 'http://localhost:3000/import?countryCode={{countryCode}}'
 ```
 
 #### Example Success Response (202 Accepted)
