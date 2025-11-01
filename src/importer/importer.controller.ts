@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Param } from '@nestjs/common';
+import { Controller, Get, Query, Logger, BadRequestException } from '@nestjs/common';
 import { ImporterService } from './importer.service';
 
 @Controller('import')
@@ -7,9 +7,17 @@ export class ImporterController {
 
   constructor(private readonly importerService: ImporterService) {}
 
-  @Get(':countryCode')
-  async triggerImport(@Param('countryCode') countryCode: string) {
-    this.logger.log(`Received import request for country: ${countryCode}`);
+  @Get()
+  async triggerImport(@Query('countryCode') countryCode?: string) {
+    this.logger.log(`Received import request.`);
+
+    if (!countryCode) {
+      this.logger.error('Country code is missing in the request.');
+      // Throws a 400 Bad Request with a custom error message
+      throw new BadRequestException('The countryCode query parameter is mandatory. You must provide a country code to proceed with the operation.');
+    }
+
+    this.logger.log(`Starting import for country: ${countryCode}`);
 
     const result = await this.importerService.importPoisByCountry(countryCode);
 
