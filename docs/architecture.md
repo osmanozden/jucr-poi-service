@@ -37,9 +37,3 @@ The service is designed for effective horizontal scaling to handle future growth
 * **Horizontal Scaling:** The **ImporterProcessor** (the worker component) is completely stateless. It is designed to be deployed in a Kubernetes (K8s) cluster with multiple replicas. Each replica pod can simultaneously consume jobs from the central **Redis Queue**, allowing the data processing throughput to be scaled linearly by simply increasing the pod count.
 * **Concurrent API Retrieval:** The service minimizes external API interaction by fetching the maximum possible number of records (e.g., 50,000) in a single request. This high-efficiency retrieval conserves API rate limits and local I/O resources before the asynchronous processing begins.
 * **Sharding Readiness:** By employing a UUIDv4 for the primary key (`_id`), the data layer is prepared for future MongoDB sharding (horizontal partitioning), which will be necessary if the database size grows beyond a single replica set's capacity.
-
----
-
-Bu döküman, teknik değerlendirmenin en önemli gereksinimlerini (Mimari, Güvenilirlik ve Ölçeklenebilirlik) kapsamlı bir şekilde karşılamaktadır.
-
-Şimdi sırada **API ve GraphQL Entegrasyonu**'nu detaylandıran **`docs/api.md`** dosyasını İngilizce olarak hazırlamak var. Devam edelim mi?

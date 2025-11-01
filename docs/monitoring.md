@@ -1,4 +1,4 @@
-## 📝 `docs/monitoring.md` (Monitoring and Logging) (Updated)
+## 📝 `docs/monitoring.md` (Monitoring and Logging)
 
 ### 1. Overview
 

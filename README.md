@@ -1,7 +1,5 @@
 # JUCR POI Importer Service
 
-[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-
 **The JUCR POI Importer Service** is a high-performance, **headless** NestJS backend service dedicated to the reliable and scalable ingestion of Point of Interest (POI) data for electric vehicle charging stations from the [OpenChargeMap (OCM) API](https://openchargemap.org/site/develop/api).
 
 This project is architected as a robust "worker" service, utilizing a **Redis-backed queue system (Bull)** to handle intensive, long-running data import tasks asynchronously, ensuring resilience and preventing HTTP timeouts.
@@ -169,5 +167,3 @@ npm run test
 # Run End-to-End (E2E) Tests
 npm run test:e2e
 ```
-
-Would you like me to make any other adjustments or add more details to a specific section?
