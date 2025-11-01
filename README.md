@@ -120,7 +120,7 @@ Triggers the asynchronous import and processing of all POIs for a specific count
 
   * **`{countryCode}`:** The 2-letter ISO code for the country (e.g., `DE`, `NL`, `FR`).
 
-**cURL Example (Import Germany):**
+**cURL Example:**
 
 ```bash
 curl --location --globoff 'http://localhost:3000/import?countryCode={{contryCode}}'
