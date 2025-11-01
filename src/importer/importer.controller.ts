@@ -1,5 +1,6 @@
-import { Controller, Get, Query, Logger, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Query, Logger, HttpCode, ValidationPipe } from '@nestjs/common';
 import { ImporterService } from './importer.service';
+import { ImportQueryDto } from './model/import-query.dto';
 
 @Controller('import')
 export class ImporterController {
@@ -8,21 +9,18 @@ export class ImporterController {
   constructor(private readonly importerService: ImporterService) {}
 
   @Get()
-  async triggerImport(@Query('countryCode') countryCode?: string) {
-    this.logger.log(`Received import request.`);
+  @HttpCode(202) 
+  async triggerImport(@Query(new ValidationPipe({ transform: true })) query: ImportQueryDto) {
+    const { countryCode } = query;
+    
+    this.logger.log(`Received import request and queueing job for: ${countryCode}`);
 
-    if (!countryCode) {
-      this.logger.error('Country code is missing in the request.');
-      throw new BadRequestException('The countryCode query parameter is mandatory. You must provide a country code to proceed with the operation.');
-    }
-
-    this.logger.log(`Starting import for country: ${countryCode}`);
-
-    const result = await this.importerService.importPoisByCountry(countryCode);
+    await this.importerService.importPoisByCountry(countryCode); 
 
     return {
-      message: `Import process started for ${countryCode}. See logs for details.`,
-      data: result,
+      message: `Import job successfully queued for ${countryCode}. You will not be blocked; check logs/status endpoint for completion.`,
+      status: 'queued',
+      countryCode: countryCode,
     };
   }
 }
