@@ -13,7 +13,6 @@ export class ImporterController {
 
     if (!countryCode) {
       this.logger.error('Country code is missing in the request.');
-      // Throws a 400 Bad Request with a custom error message
       throw new BadRequestException('The countryCode query parameter is mandatory. You must provide a country code to proceed with the operation.');
     }
 
